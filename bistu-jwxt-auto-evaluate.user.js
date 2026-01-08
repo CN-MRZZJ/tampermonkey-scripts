@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BISTU教务系统一键评教
 // @namespace    https://github.com/CN-MRZZJ/tampermonkey-scripts
-// @version      2.0.0
+// @version      3.0.0
 // @description  在BISTU（北京信息科技大学）教务系统评教页面右侧添加一键评教按钮，自动选中所有评教选项，提升评教效率
 // @author       MRZZJ
 // @match        https://jwxt.bistu.edu.cn/jwapp/sys/wspjyyapp/*
