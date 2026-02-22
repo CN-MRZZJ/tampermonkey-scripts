@@ -3,7 +3,7 @@
 // @namespace    https://github.com/CN-MRZZJ/tampermonkey-scripts
 // @version      1.0.0
 // @description  在BISTU（北京信息科技大学）教务系统课表页面添加CSV导出选项，支持导入WakeUp课程表
-// @author       User
+// @author       MRZZJ
 // @match        https://jwxt.bistu.edu.cn/jwapp/sys/kbapp/*default/index.do*
 // @grant        none
 // @run-at       document-end
