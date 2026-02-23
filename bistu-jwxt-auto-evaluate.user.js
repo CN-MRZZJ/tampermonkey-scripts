@@ -14,7 +14,7 @@
 // @supportURL   https://github.com/CN-MRZZJ/tampermonkey-scripts/issues
 // @updateURL    https://raw.githubusercontent.com/CN-MRZZJ/tampermonkey-scripts/main/bistu-jwxt-auto-evaluate.user.js
 // @downloadURL  https://raw.githubusercontent.com/CN-MRZZJ/tampermonkey-scripts/main/bistu-jwxt-auto-evaluate.user.js
-// @icon         https://jwxt.bistu.edu.cn/favicon.ico
+// @icon         https://info.bistu.edu.cn//home/icon.jpg
 // ==/UserScript==
 
 (function() {
