@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BISTU教务系统课表导出
 // @namespace    https://github.com/CN-MRZZJ/tampermonkey-scripts
-// @version      1.2.0
+// @version      1.3.0
 // @description  在BISTU（北京信息科技大学）教务系统课表页面添加CSV和iCal导出选项，支持导入WakeUp课程表和日历应用
 // @author       MRZZJ
 // @match        https://jwxt.bistu.edu.cn/jwapp/sys/kbapp/*default/index.do*
@@ -26,7 +26,7 @@
         const dropdownMenu = document.querySelector('ul.el-dropdown-menu');
         if (!dropdownMenu) {
             // 如果没找到，等待一段时间后重试
-            setTimeout(addExportOption, 1000);
+            setTimeout(addExportOption, 1500);
             return;
         }
 
@@ -1202,7 +1202,6 @@
                     border-radius: 4px;
                     font-size: 14px;
                 `;
-                githubRepoInput.value = 'cn-mrzzj/bistu-webcal';
                 githubGroup.appendChild(githubRepoInput);
 
                 // 创建按钮容器
@@ -1433,44 +1432,8 @@
                     });
                     termGroup.appendChild(termSelect);
 
-                    // 服务提供商选择
-                    const serviceGroup = document.createElement('div');
-                    form.appendChild(serviceGroup);
-
-                    const serviceLabel = document.createElement('label');
-                    serviceLabel.textContent = '服务提供商：';
-                    serviceLabel.style.display = 'block';
-                    serviceLabel.style.marginBottom = '5px';
-                    serviceLabel.style.fontSize = '14px';
-                    serviceGroup.appendChild(serviceLabel);
-
-                    const serviceSelect = document.createElement('select');
-                    serviceSelect.id = 'service-select';
-                    serviceSelect.style.cssText = `
-                        width: 100%;
-                        padding: 8px;
-                        border: 1px solid #ddd;
-                        border-radius: 4px;
-                        font-size: 14px;
-                    `;
-
-                    // 服务选项
-                    const serviceOptions = [
-                        { value: 'built-in', text: '内置服务 (cn-mrzzj/bistu-webcal)' },
-                        { value: 'custom', text: '自定义服务' }
-                    ];
-
-                    serviceOptions.forEach(option => {
-                        const opt = document.createElement('option');
-                        opt.value = option.value;
-                        opt.textContent = option.text;
-                        serviceSelect.appendChild(opt);
-                    });
-                    serviceGroup.appendChild(serviceSelect);
-
                     // GitHub配置
                     const githubGroup = document.createElement('div');
-                    githubGroup.id = 'github-config-group';
                     form.appendChild(githubGroup);
 
                     const githubLabel = document.createElement('label');
@@ -1506,23 +1469,8 @@
                         border-radius: 4px;
                         font-size: 14px;
                     `;
+                    githubRepoInput.value = 'cn-mrzzj/bistu-webcal';
                     githubGroup.appendChild(githubRepoInput);
-
-                    // 服务选择事件
-                    serviceSelect.addEventListener('change', function() {
-                        const selectedService = serviceSelect.value;
-                        if (selectedService === 'built-in') {
-                            // 隐藏GitHub配置
-                            githubGroup.style.display = 'none';
-                        } else {
-                            // 显示GitHub配置
-                            githubGroup.style.display = 'block';
-                        }
-                    });
-
-                    // 初始隐藏GitHub配置
-                    serviceSelect.value = 'built-in';
-                    githubGroup.style.display = 'none';
 
                     // 创建按钮容器
                     const buttons = document.createElement('div');
@@ -1562,28 +1510,19 @@
                         const selectedYear = parseInt(yearSelect.value);
                         const selectedTerm = parseInt(termSelect.value);
                         const termCode = `${selectedYear}-${selectedYear + 1}-${selectedTerm}`;
-                        const selectedService = serviceSelect.value;
                         
-                        let githubToken, githubRepo;
+                        // 获取GitHub配置
+                        const githubToken = githubTokenInput.value;
+                        const githubRepo = githubRepoInput.value;
                         
-                        if (selectedService === 'built-in') {
-                            // 使用内置服务
-                            githubToken = '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';
-                            githubRepo = 'cn-mrzzj/bistu-webcal';
-                        } else {
-                            // 使用自定义服务
-                            githubToken = githubTokenInput.value;
-                            githubRepo = githubRepoInput.value;
-                            
-                            if (!githubToken) {
-                                alert('请输入GitHub个人访问令牌');
-                                return;
-                            }
-                            
-                            if (!githubRepo || !githubRepo.includes('/')) {
-                                alert('请输入正确的GitHub仓库名（格式：username/repo）');
-                                return;
-                            }
+                        if (!githubToken) {
+                            alert('请输入GitHub个人访问令牌');
+                            return;
+                        }
+                        
+                        if (!githubRepo || !githubRepo.includes('/')) {
+                            alert('请输入正确的GitHub仓库名（格式：username/repo）');
+                            return;
                         }
                         
                         // 显示加载界面
@@ -1591,7 +1530,7 @@
                         
                         try {
                             // 处理课表数据和上传
-                            await processSchedule(termCode, githubToken, githubRepo, selectedService);
+                            await processSchedule(termCode, githubToken, githubRepo);
                         } catch (err) {
                             console.error("处理失败:", err);
                             showErrorInterface(err.message);
@@ -1805,7 +1744,7 @@
                 }
 
                 // 处理课表数据和上传
-                async function processSchedule(termCode, githubToken, githubRepo, selectedService) {
+                async function processSchedule(termCode, githubToken, githubRepo) {
                     // 2. 获取学期周次信息
                     console.log("正在拉取学期周次信息...");
                     let termWeeksUrl = "/jwapp/sys/kbbpapp/api/schoolCalendar/getTermWeeks.do";
@@ -2115,13 +2054,8 @@
                     console.log("GitHub上传结果:", uploadResult);
                     
                     // 生成webcal URL
-                    let webcalUrl;
-                    if (selectedService === 'built-in') {
-                        webcalUrl = `webcal://cn-mrzzj.github.io/bistu-webcal/${folderName}/${fileName}`;
-                    } else {
-                        const username = githubRepo.split('/')[0];
-                        webcalUrl = `webcal://${username}.github.io/${folderName}/${fileName}`;
-                    }
+                    const username = githubRepo.split('/')[0];
+                    const webcalUrl = `webcal://${username}.github.io/${folderName}/${fileName}`;
                     console.log("Webcal URL:", webcalUrl);
                     
                     // 生成QR code
