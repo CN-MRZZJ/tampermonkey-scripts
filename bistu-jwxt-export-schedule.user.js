@@ -372,6 +372,65 @@
             let csvRows = [];
             csvRows.push(["课程名称", "星期", "开始节数", "结束节数", "老师", "地点", "周数"]);
 
+            // 课程时间配置（根据教学运转时间表调整）
+            const classTimes = [
+                { start: '08:00', end: '08:45' },  // 第1节
+                { start: '08:50', end: '09:35' },  // 第2节
+                { start: '09:50', end: '10:35' },  // 第3节
+                { start: '10:40', end: '11:25' },  // 第4节
+                { start: '11:30', end: '12:15' },  // 第5节
+                { start: '13:30', end: '14:15' },  // 第6节
+                { start: '14:20', end: '15:05' },  // 第7节
+                { start: '15:20', end: '16:05' },  // 第8节
+                { start: '16:10', end: '16:55' },  // 第9节
+                { start: '18:30', end: '19:15' },  // 第10节
+                { start: '19:20', end: '20:05' },  // 第11节
+                { start: '20:10', end: '20:55' },  // 第12节
+                { start: '21:00', end: '21:45' }   // 第13节
+            ];
+
+            // 生成学期开始日期（从API获取）
+            function getTermStartDate(termCode, termWeeksData) {
+                // 从学期周次信息中获取
+                if (termWeeksData && termWeeksData.datas && termWeeksData.datas.getTermWeeks) {
+                    const weeks = termWeeksData.datas.getTermWeeks;
+                    // 查找第一周的开始日期
+                    const firstWeek = weeks.find(week => week.serialNumber === 1);
+                    if (firstWeek && firstWeek.startDate) {
+                        console.log("从API获取学期开始日期:", firstWeek.startDate);
+                        return new Date(firstWeek.startDate);
+                    }
+                }
+                
+                // 如果API获取失败，返回当前日期
+                console.warn("无法从API获取学期开始日期，使用当前日期作为默认值");
+                return new Date();
+            }
+
+            const termStartDate = getTermStartDate(termCode, termWeeksData);
+            console.log("学期开始日期:", termStartDate);
+
+            // 解析周数信息
+            function getWeekNumbers(weekBinary) {
+                const weekNumbers = [];
+                
+                // 从 week 二进制字符串解析
+                if (weekBinary && typeof weekBinary === 'string') {
+                    for (let i = 0; i < weekBinary.length; i++) {
+                        if (weekBinary[i] === '1') {
+                            weekNumbers.push(i + 1);
+                        }
+                    }
+                }
+                
+                // 如果解析失败，返回默认值
+                if (weekNumbers.length === 0) {
+                    weekNumbers.push(1);
+                }
+                
+                return weekNumbers;
+            }
+
             arrangedList.forEach(item => {
                 let courseName = item.courseName || "未知课程";
                 let dayOfWeek = item.dayOfWeek || "";
@@ -898,7 +957,7 @@
                     const endTime = course.endTime || classTimes[endSection - 1]?.end || '08:45';
 
                     // 解析周数信息，生成多个事件
-                    const weekNumbers = getWeekNumbers(course.week, weeks);
+                    const weekNumbers = getWeekNumbers(course.week);
                     
                     weekNumbers.forEach((weekNum, weekIndex) => {
                         // 计算课程日期（基于学期开始日期 + 周数偏移）
@@ -926,10 +985,10 @@
                 });
 
                 // 解析周数信息
-                function getWeekNumbers(weekBinary, weeksText) {
+                function getWeekNumbers(weekBinary) {
                     const weekNumbers = [];
                     
-                    // 优先从 week 二进制字符串解析
+                    // 从 week 二进制字符串解析
                     if (weekBinary && typeof weekBinary === 'string') {
                         for (let i = 0; i < weekBinary.length; i++) {
                             if (weekBinary[i] === '1') {
@@ -938,26 +997,7 @@
                         }
                     }
                     
-                    // 如果二进制解析失败，尝试从文本解析
-                    if (weekNumbers.length === 0 && weeksText) {
-                        // 处理范围格式，如 "14-15"
-                        const rangeMatch = weeksText.match(/(\d+)-(\d+)/);
-                        if (rangeMatch) {
-                            const start = parseInt(rangeMatch[1]);
-                            const end = parseInt(rangeMatch[2]);
-                            for (let i = start; i <= end; i++) {
-                                weekNumbers.push(i);
-                            }
-                        } else {
-                            // 处理单个周数，如 "14"
-                            const singleMatch = weeksText.match(/\d+/);
-                            if (singleMatch) {
-                                weekNumbers.push(parseInt(singleMatch[0]));
-                            }
-                        }
-                    }
-                    
-                    // 如果都解析失败，返回默认值
+                    // 如果解析失败，返回默认值
                     if (weekNumbers.length === 0) {
                         weekNumbers.push(1);
                     }
@@ -1939,7 +1979,7 @@
                             const endTime = course.endTime || classTimes[endSection - 1]?.end || '08:45';
 
                             // 解析周数信息，生成多个事件
-                            const weekNumbers = getWeekNumbers(course.week, weeks);
+                    const weekNumbers = getWeekNumbers(course.week);
                             
                             weekNumbers.forEach((weekNum, weekIndex) => {
                                 // 计算课程日期（基于学期开始日期 + 周数偏移）
@@ -1967,10 +2007,10 @@
                         });
 
                         // 解析周数信息
-                        function getWeekNumbers(weekBinary, weeksText) {
+                        function getWeekNumbers(weekBinary) {
                             const weekNumbers = [];
                             
-                            // 优先从 week 二进制字符串解析
+                            // 从 week 二进制字符串解析
                             if (weekBinary && typeof weekBinary === 'string') {
                                 for (let i = 0; i < weekBinary.length; i++) {
                                     if (weekBinary[i] === '1') {
@@ -1979,26 +2019,7 @@
                                 }
                             }
                             
-                            // 如果二进制解析失败，尝试从文本解析
-                            if (weekNumbers.length === 0 && weeksText) {
-                                // 处理范围格式，如 "14-15"
-                                const rangeMatch = weeksText.match(/(\d+)-(\d+)/);
-                                if (rangeMatch) {
-                                    const start = parseInt(rangeMatch[1]);
-                                    const end = parseInt(rangeMatch[2]);
-                                    for (let i = start; i <= end; i++) {
-                                        weekNumbers.push(i);
-                                    }
-                                } else {
-                                    // 处理单个周数，如 "14"
-                                    const singleMatch = weeksText.match(/\d+/);
-                                    if (singleMatch) {
-                                        weekNumbers.push(parseInt(singleMatch[0]));
-                                    }
-                                }
-                            }
-                            
-                            // 如果都解析失败，返回默认值
+                            // 如果解析失败，返回默认值
                             if (weekNumbers.length === 0) {
                                 weekNumbers.push(1);
                             }
