@@ -20,22 +20,30 @@
 (function() {
     'use strict';
 
-    // 修复HTML渲染问题的函数
-    function fixRendering() {
-        // 直接查找课程信息元素
+    // 移除班级信息的函数
+    function removeClassInfo() {
         const courseInfoElements = document.querySelectorAll('[class*="CourseItemInfoText"]');
-        let fixedCount = 0;
+        let removedCount = 0;
         
         courseInfoElements.forEach((element) => {
             try {
-                // 检查是否包含链接
-                const links = element.querySelectorAll('a[data-kblx]');
-                if (links.length === 0) {
-                    // 尝试直接设置innerHTML为当前textContent
-                    const text = element.textContent || element.innerText || '';
-                    if (text) {
-                        element.innerHTML = text;
-                        fixedCount++;
+                // 检查是否包含班级信息（包含多个班级名称，以逗号分隔）
+                const text = element.textContent || element.innerText || '';
+                
+                // 检查是否包含多个班级名称的模式（包含逗号）
+                if (text.includes(',')) {
+                    // 移除所有班级信息，将元素内容清空
+                    element.textContent = '';
+                    removedCount++;
+                } else {
+                    // 检查是否包含单个班级信息（在链接中）
+                    const links = element.querySelectorAll('a[data-kblx]');
+                    if (links.length > 0) {
+                        // 移除链接中的班级信息
+                        links.forEach(link => {
+                            link.remove();
+                        });
+                        removedCount++;
                     }
                 }
             } catch (error) {
@@ -43,30 +51,15 @@
             }
         });
         
-        // 处理tooltip中的元素
-        const tooltipElements = document.querySelectorAll('.ant-tooltip-inner');
-        tooltipElements.forEach((tooltip) => {
-            const courseLiElements = tooltip.querySelectorAll('[class*="courseLi"]');
-            courseLiElements.forEach((element) => {
-                try {
-                    // 检查是否包含链接
-                    const links = element.querySelectorAll('a[data-kblx]');
-                    if (links.length === 0) {
-                        const text = element.textContent || element.innerText || '';
-                        if (text) {
-                            element.innerHTML = text;
-                            fixedCount++;
-                        }
-                    }
-                } catch (error) {
-                    // 静默处理错误
-                }
-            });
-        });
-        
-        if (fixedCount > 0) {
-            console.log(`修复了 ${fixedCount} 个元素的渲染问题`);
+        if (removedCount > 0) {
+            console.log(`移除了 ${removedCount} 个元素的班级信息`);
         }
+    }
+
+    // 主函数
+    function fixRendering() {
+        // 移除班级信息
+        removeClassInfo();
     }
 
     // 监听页面变化，处理单页应用的路由变化
