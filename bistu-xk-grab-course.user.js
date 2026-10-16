@@ -383,19 +383,20 @@
             }
             logMsg('info', `将在 ${new Date(target).toLocaleString('zh-CN')} 自动开始 (${Math.round(delay/1000)}秒后)`);
             grabRunning = false;
-            updatePanel();
             grabTimer = setTimeout(doStart, delay);
+            updatePanel();
         } else {
             doStart();
         }
     }
 
     function stopGrab() {
+        const wasActive = grabRunning || grabTimer;
         grabRunning = false;
         grabRoundActive = false;
         if (grabTimer) { clearTimeout(grabTimer); grabTimer = null; }
         updatePanel();
-        logMsg('info', '已停止抢课');
+        if (wasActive) logMsg('info', '已停止抢课');
     }
 
     // ================================================================
@@ -625,10 +626,13 @@
                 saveConfig();
                 updatePanel();
                 startCountdown();
-                // highlight active
                 document.querySelectorAll('.xk-time-preset').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 logMsg('info', `定时: ${d.toLocaleTimeString('zh-CN', {hour12: false})}`);
+                // one-click arm
+                if (!grabRunning && config.courseOrder.length > 0 && capturedTemplate) {
+                    startGrab();
+                }
             });
         });
 
@@ -738,10 +742,10 @@ ${extraHtml}
             const total = config.courseOrder.length;
             const successCount = config.courseOrder.filter(id => config.coursesStatus[id] === 'success').length;
             if (grabRunning) {
-                badge.textContent = total > 1 ? `${successCount}/${total} 运行中` : '运行中';
+                badge.textContent = total > 1 ? `${successCount}/${total} 抢课中` : '抢课中';
                 badge.className = 'xk-badge';
             } else if (grabTimer) {
-                badge.textContent = '等待定时';
+                badge.textContent = '定时中';
                 badge.className = 'xk-badge';
             } else {
                 badge.textContent = total > 0 && successCount === total ? '全部完成' : '待命中';
@@ -750,8 +754,9 @@ ${extraHtml}
         }
 
         // buttons
-        if (startBtn) startBtn.style.display = grabRunning ? 'none' : '';
-        if (stopBtn) stopBtn.style.display = grabRunning ? '' : 'none';
+        const armed = grabRunning || grabTimer;
+        if (startBtn) startBtn.style.display = armed ? 'none' : '';
+        if (stopBtn) stopBtn.style.display = armed ? '' : 'none';
         if (clearAllBtn) clearAllBtn.style.display = config.courseOrder.length > 0 ? '' : 'none';
     }
 
